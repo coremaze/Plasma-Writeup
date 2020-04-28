@@ -110,7 +110,7 @@ Here's doing addition but with extra recursion:
 
 ![Recursive Addition](Images/RecursiveAddition.png?raw=true)
 
-Multiplication by multiplying by 2 and then later dividing by 2
+Multiplication by multiplying by 2 and then later dividing by 2:
 
 ![Multiplication with Division](Images/MultiplicationWithDivision.png?raw=true)
 
@@ -178,4 +178,92 @@ sub_0233 (arg0, arg1) {
 }
 ```
 
-It appends the data held by arg1 to the data held by arg0.
+It appends the data held by arg1 to the data held by arg0. I replaced all calls to this with `CALL EXTEND_ARRAY`. I did similar renaming for future functions as well.
+
+I moved onto the next required function at `056F`:
+
+![Disassembly 4](Images/Disassembly4.png?raw=true)
+
+A nice, short function which easily decompiled to the following:
+
+```
+sub_056F (arg0, arg1, arg2) {
+  return (arg2[arg0 % arg2.length] + arg0) % arg1;
+}
+```
+
+This function's purpose was confusing at first, but later, in context, I learned that it was used to generate an index to swap bytes with in order to scramble the PLX. Or, in this case, it's supposed to be *unscrambling* the PLX, but since it's already unscrambled, it ruins the PLX. It takes an index, the length of the buffer to be used for, and an array of values for use as a key.
+
+I used the same strategies to decompile `0593`:
+
+```
+sub_0593(arg0, arg1) {
+  var2 = arg0.length;
+  var3 = var2 - 1;
+  while (var3 >= 0) {
+    var4 = sub_056F(var3, var2, arg1); // Get swap index
+    arg0[var3] = arg0[var3] - var3;
+    var5 = arg0[var3];
+    var6 = arg0[var4];
+    arg0[var3] = var6;
+    arg0[arg4] = var5;
+    var3--;
+  }
+  return 0;
+}
+```
+
+This, combined with the previous function finally begins to expose the (de)obfuscation algorithm, which is actually a form of weak symmetrical encryption. It takes a buffer and a key, goes through all the indices in reverse (since this is for decryption), performs arithmetic on a byte and swaps it with another byte using said key.
+
+I could move on to the top-level function now, `0ED1`.
+
+```
+sub_0ED1(global) { // A buffer representing your "id" is already on the stack
+  var0 = new vector();
+  var0 = PLX;  // Retrived through some syscall
+  var1 = new vector();
+  var2 = new vector();
+  var1.resize(16);
+  var1 = {37, 124, 3, 213, 190, 48, 142, 34, 7, 77, 143, 210, 201, 97, 86, 23};
+  var2.extend(global);
+  sub_0593(var2, var1); // decrypt
+  sub_0593(var0, var2); // decrypt
+  //don't think I need to care about the rest of this function
+}
+```
+
+A key is constructed at runtime to decrypt your machine's "id" which is already on the stack, and then the id is used to decrypt the PLX.
+
+Finally, we have arrived at the answer for how the decryption algorithm works, and it's trivial to run it in reverse to derive the encryption algorithm that our authentication server will need. However, this takes an encrypted version of our id, and it looks nothing like the hexdump that is being provided as a parameter. Even when decrypted, it looks something like this:
+
+All ASCII:
+
+`000000654C1456387226FEC3152EFBC53416A635B21976FFA5D1A844EEA1EE6266D772CEFEF842DE3133C9E20000000801D617654E45521E01D6176537D2672E01D617595D0CF02201D61CCF4C45DFCA`
+
+For my purposes, I don't need to know how the id itself is generated (though, strings in this bytecode reveal that it uses WQL to get serial numbers and such from hardware components), but I do need to know how to go from the parameter being sent to the server to this plaintext form so I can encrypt the PLX with it.
+
+I found where the hexdump version of the id was used:
+
+![ID 1](Images/ID1.png?raw=true)
+
+However, that function was called by reference, and returned to one of the emulator's functions:
+
+![ID 2](Images/ID2.png?raw=true)
+
+So, it's time to go back into the emulator's disassembly.
+
+![Disassembly 5](Images/Disassembly5.png?raw=true)
+
+It assembles a different key than before: `[  4,  21, 132,  64,  32, 132, 243, 132,  17, 177,  43, 132, 101,  42,  44, 150]`
+
+Then, it appends your machine id to another array. It was confusing in its implementation for me, but at runtime, I could see that this `UNKNOWN?` chunk actually fills var1 with your serial. This concatenates your serial with your machine id. Once this concatenated string is created, it encrypts it using the new key, dumps it as hex, and sends it to x86 code to be used as a parameter for the server.
+
+Now we know everything we need to know in order to reverse this process so that the server can generated encrypted data.
+
+![Python 1](Images/Python1.png?raw=true)
+
+![Python 2](Images/Python2.png?raw=true)
+
+This works. Using this code to generate responses from our server allows Plasma to successfully decrypt the traffic. The product activates.
+
+![Python 2](Images/Activated.png?raw=true)

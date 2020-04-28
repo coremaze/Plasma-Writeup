@@ -91,4 +91,3 @@ Opcode 0x3B - Boolean AND. Implementation already described.
 This left me with a table of all the opcodes I'd need to know:
 
 ![Opcode Table](Images/OpcodeTable.png?raw=true)
-![Opcode Table](Images/OpcodeTable.png?raw=true)
