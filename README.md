@@ -6,7 +6,7 @@ Picroma Plasma is a vector image editor written by Wolfram von Funck under the c
 
 Picroma/Wollay is also the author the game [Cube World](https://www.cubeworld.com/), and as a result, the game's GUI is constructed using Plasma graphics. I became interested in these Plasma graphics files in 2016, as I was beginning to get into reverse engineering and programming, and I had just finished building a converter for another, much simpler, undocumented image file format. Until this point, no one else had managed to make any useful modifications to Cube World's image files.
 
-The years went on, and with the help of Andoryuuta, I created [PLXML](https://github.com/ChrisMiuchiz/Plasma-Graphics-File-Parser), a tool that could convert the Plasma graphics files (known as .PLX, .PLD, or .PLG) to and from an XML file format. However, since these are vector graphics, it's more difficult to create an editor for them, and there was no GUI based editor except Plasma itself.
+The years went on, and with the help of my friend [Andoryuuta](https://github.com/Andoryuuta), I created [PLXML](https://github.com/ChrisMiuchiz/Plasma-Graphics-File-Parser), a tool that could convert the Plasma graphics files (known as .PLX, .PLD, or .PLG) to and from an XML file format. However, since these are vector graphics, it's more difficult to create an editor for them, and there was no GUI based editor except Plasma itself.
 
 Plasma was Picroma's first (and probably, in their eyes, their primary) product, but only one release was ever created, and it was in 2011. It used an authentication server which eventually went down, so when it stopped working, most people just got rid of the software and moved on. It wasn't until April 20th, 2020 that the installer from 2011 resurfaced and we could get to work on making this old art tool work again.
 
@@ -56,7 +56,7 @@ The function that calls both the parser and error handler receives data using an
 
 ![Data vector](Images/DataVector.png?raw=true)
 
-However, examining the data contained within the vector reveals nonsense, even when my server gives it a valid PLX file. The vectors coming into this function are the correct size to be the data being sent by my server, but the data is not what I sent. Upon more experimention with small buffers, it seemed to be (de)obfuscated by performing addition/subtraction on the bytes and swapping them around somehow, so it didn't seem like a particuarly strong obfuscation algorithm.
+However, examining the data contained within the vector reveals nonsense, even when my server gives it a valid PLX file. The vectors coming into this function are the correct size to be the data being sent by my server, but the data is not what I sent. Upon more experimentation with small buffers, it seemed to be (de)obfuscated by performing addition/subtraction on the bytes and swapping them around somehow, so it didn't seem like a particularly strong obfuscation algorithm.
 
 For now, I decided to just overwrite the vector in memory using the original data before it was used. This effectively bypasses whatever obfuscation algorithm is happening. After implanting this valid PLX data, I stopped getting error messages when attempting to authenticate, but it caused exceptions instead. This ended up being due to elements being missing from my constructed PLX file and causing null pointer dereferences, so I worked through the exceptions until I constructed a PLX file using [PLXML](https://github.com/ChrisMiuchiz/Plasma-Graphics-File-Parser) with enough of the bare minimum requirements to load up one of Cube World's PLX files.
 
@@ -68,7 +68,7 @@ Around this time, I started looking at what the picroma.de domain used to point 
 
 **The domain was now available after all these years, and I bought it.**
 
-With ownership of the picroma.de domain, in theory I could make Plasma work without even touching the binary or modifying the hosts file. Just, vanilla copies of Plasma would suddenly start working again one day. The thought of this was so cool to me that I halted my pursuit of a creating a better sheet PLX file and started a deeper investigation into how the response was getting (de)obfuscated by the client. Understanding this would hopefully allow me to have my server send well-formed obfuscated responses that an unmodified client could understand.
+With ownership of the picroma.de domain, in theory I could make Plasma work without even touching the binary or modifying the hosts file. Just, vanilla copies of Plasma would suddenly start working again one day. The thought of this was so cool to me that I halted my pursuit of creating a better sheet PLX file and started a deeper investigation into how the response was getting (de)obfuscated by the client. Understanding this would hopefully allow me to have my server send well-formed obfuscated responses that an unmodified client could understand.
 
 I had previously not been able to understand anything about how the deobfuscation algorithm was actually implemented. I found the last bit of code that seemed to touch it before it was transformed:
 
@@ -80,7 +80,11 @@ However, setting breakpoints on bytes inside this buffer to see what algorithm w
 
 What was happening here seemed over my head. I'd seen this same type of code pattern in Cube World before, and was unable to figure out what was going on.
 
-Apparently Andoryuuta was less oblivious, because he said he wasn't able to figure out how the virtual machine in Cube World worked.
+Apparently Andoryuuta was less oblivious, because he noted he wasn't able to figure out how the virtual machine in Cube World worked.
+
+Then I realized that's what I was looking at.
+
+### An Embedded Emulator
 
 When framing it in the perspective of some kind of bytecode interpreter, emulator, or virtual machine, and given that I have created an emulator for obscure hardware before, this code suddenly made a lot more sense. So, with that bit of knowledge, I started working on the decompilation of this strange loop function:
 
@@ -90,7 +94,7 @@ This machine, whether to be called a virtual machine, emulator, or bytecode inte
 
 I dumped this strange bytecode from memory, and knowing that `data = offset - program[offset]`, I was able to deobfuscate the entire thing, but that isn't much use without some kind of disassembler.
 
-So, I decided had to figure out what each opcode did. It is worth noting at this point that I tried to see if this bytecode belongs to any existing CPU or language, but my search came up short. The constructor of this emulator conveniently assigned all the functions for me to analyze, but the list went on and on...
+So, I decided I had to figure out what each opcode did. It is worth noting at this point that I tried to see if this bytecode belongs to any existing CPU or language, but my search came up short. The constructor of this emulator conveniently assigned all the functions for me to analyze, but the list went on and on...
 
 ![Lots of opcodes](Images/LotsOfOpcodes.png?raw=true)
 
@@ -102,7 +106,7 @@ It takes two elements off the stack, adds them together, and then pushes the res
 
 Unfortunately, you can see a hint of something that became far too common while analyzing these opcodes. It makes one element negative before subtracting it. This is part of a larger pattern of fairly weak attempts to confuse a reverse engineer that made it frustrating to figure out what all the opcodes did, and there were many duplicate opcodes that were just implemented in different ways.
 
-Here's addition implemented by multiplying the result with some number and its reciprical:
+Here's addition implemented by multiplying the result with some number and its reciprocal:
 
 ![Confusing Addition](Images/ConfusingAddition.png?raw=true)
 
@@ -144,7 +148,7 @@ Reverse engineering these left me with a table of all the opcodes I'd need to kn
 
 This is just what I needed to move on to disassembling the bytecode.
 
-### Disassembly
+### Disassembling a New Instruction Set
 
 I had been working on a disassembler while reverse engineering the opcodes, but now that I have a complete description of the opcodes this program uses, I can disassemble the bytecode and begin to make a serious attempt at understanding it. The source for my disassembler is available at https://github.com/ChrisMiuchiz/PLASM-Disassembler.
 
@@ -158,7 +162,7 @@ I had arrived in the middle of the obfuscation process. However, I wanted to mak
 
 ![Disassembly 2](Images/Disassembly2.png?raw=true)
 
-I started by reverse engineering all the functions that this function called. My strategy for doing this was to look at every chunk of code that resulted in a call, syscall, or variable write, and convert it into a line of higher level pseudocode. For exmaple, this is what the beginning of the `0233` subroutine looked like after I had taken my notes on it:
+I started by reverse engineering all the functions that this function called. My strategy for doing this was to look at every chunk of code that resulted in a call, syscall, or variable write, and convert it into a line of higher level pseudocode. For example, this is what the beginning of the `0233` subroutine looked like after I had taken my notes on it:
 
 ![Disassembly 3](Images/Disassembly3.png?raw=true)
 
@@ -220,7 +224,7 @@ I could move on to the top-level function now, `0ED1`.
 ```
 sub_0ED1(global) { // A buffer representing your "id" is already on the stack
   var0 = new vector();
-  var0 = PLX;  // Retrived through some syscall
+  var0 = PLX;  // Retrieved through some syscall
   var1 = new vector();
   var2 = new vector();
   var1.resize(16);
@@ -236,7 +240,7 @@ A key is constructed at runtime to decrypt your machine's "id" which is already 
 
 Finally, we have arrived at the answer for how the decryption algorithm works, and it's trivial to run it in reverse to derive the encryption algorithm that our authentication server will need. However, this takes an encrypted version of our id, and it looks nothing like the hexdump that is being provided as a parameter. Even when decrypted, it looks something like this:
 
-All ASCII:
+This is all ASCII:
 
 `000000654C1456387226FEC3152EFBC53416A635B21976FFA5D1A844EEA1EE6266D772CEFEF842DE3133C9E20000000801D617654E45521E01D6176537D2672E01D617595D0CF02201D61CCF4C45DFCA`
 
@@ -258,7 +262,9 @@ It assembles a different key than before: `[  4,  21, 132,  64,  32, 132, 243, 1
 
 Then, it appends your machine id to another array. It was confusing in its implementation for me, but at runtime, I could see that this `UNKNOWN?` chunk actually fills var1 with your serial. This concatenates your serial with your machine id. Once this concatenated string is created, it encrypts it using the new key, dumps it as hex, and sends it to x86 code to be used as a parameter for the server.
 
-Now we know everything we need to know in order to reverse this process so that the server can generated encrypted data.
+### Accomplishment
+
+Now we know everything we need to know in order to reverse this process so that the server can generate encrypted data.
 
 ![Python 1](Images/Python1.png?raw=true)
 
@@ -266,4 +272,12 @@ Now we know everything we need to know in order to reverse this process so that 
 
 This works. Using this code to generate responses from our server allows Plasma to successfully decrypt the traffic. The product activates.
 
-![Python 2](Images/Activated.png?raw=true)
+![Activated](Images/Activated.png?raw=true)
+
+### Finishing up
+
+We have a working authentication server, but the PLX file we're sending still doesn't work quite right. It doesn't look like the sheet displayed in those Picroma videos, and I've had trouble actually adding shapes to the PLX. The worst problem is that sometimes it still crashes Plasma.
+
+I tracked the crashing issue down to attempting to deallocate uninitialized memory. With some experimentation, I realized that in my PLX file, I had two `plasma::Nodes` associated with 1 `plasma::Widget`. This was probably causing an attempt to destruct the widget twice. Removing the widget from one of the nodes fixed the issue. Associating a new widget with one of the nodes causes an infinite loop, so I couldn't do that.
+
+I'm not sure how sheets are supposed to work in Plasma, but it looks like sheets sadfjkllksdjaf;
