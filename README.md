@@ -1,4 +1,6 @@
-# Plasma-Writeup
+# Cracking Picroma Plasma Without Cracking it
+
+## And Reverse Engineering an Unknown Instruction Set
 
 ### Introduction
 
