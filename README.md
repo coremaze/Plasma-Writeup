@@ -10,7 +10,9 @@ Picroma/Wollay is also the author the game [Cube World](https://www.cubeworld.co
 
 The years went on, and with the help of my friend [Andoryuuta](https://github.com/Andoryuuta), I created [PLXML](https://github.com/ChrisMiuchiz/Plasma-Graphics-File-Parser), a tool that could convert the Plasma graphics files (known as .PLX, .PLD, or .PLG) to and from an XML file format. However, since these are vector graphics, it's more difficult to create an editor for them, and there was no GUI based editor except Plasma itself.
 
-Plasma was Picroma's first (and probably, in their eyes, their primary) product, but only one release was ever created, and it was in 2011. It used an authentication server which eventually went down, so when it stopped working, most people just got rid of the software and moved on. It wasn't until April 20th, 2020 that the installer from 2011 resurfaced and we could get to work on making this old art tool work again. The installer is PicromaPlasmaSetup.exe (SHA256 1ED1DA68781666CC03DAD79325B1F0603552DEDF55357778DA8518DFBF54F37A).
+Plasma was Picroma's first (and probably, in their eyes, their primary) product, but only one release was ever created, and it was in 2011. It used an authentication server which eventually went down, so when it stopped working, most people just got rid of the software and moved on. It wasn't until April 20th, 2020 that the installer from 2011 resurfaced and we could get to work on making this old art tool work again. 
+
+Note: The installer is PicromaPlasmaSetup.exe (SHA256 1ED1DA68781666CC03DAD79325B1F0603552DEDF55357778DA8518DFBF54F37A).
 
 ### Digging in
 
@@ -292,7 +294,7 @@ This works. Using this code to generate responses from our server allows Plasma 
 
 We have a working authentication server, but the PLX file we're sending still doesn't work quite right. It doesn't look like the sheet displayed in those Picroma videos, and I've had trouble actually adding shapes to the PLX. The worst problem is that sometimes it still crashes Plasma.
 
-I tracked the crashing issue down to attempting to deallocate uninitialized memory. With some experimentation, I realized that in my PLX file, I had two `plasma::Nodes` associated with 1 `plasma::Widget`. This was probably causing an attempt to destruct the widget twice. Removing the widget from one of the nodes fixed the issue. Associating a new widget with one of the nodes causes an infinite loop, so I couldn't do that.
+I tracked the crashing issue down to attempting to deallocate uninitialized memory. With some experimentation, I realized that in my PLX file, I had 2 `plasma::Nodes` associated with 1 `plasma::Widget`. This was probably causing an attempt to destruct the widget twice. Removing the widget from one of the nodes fixed the issue. Associating a new widget with one of the nodes causes an infinite loop, so I couldn't do that.
 
 While fixing crashing issues, I noticed that if a PLX file that crashes Plasma was sent, Plasma would likely crash next run without even connecting to the server. It turned out that Plasma saves data to `C:\ProgramData\Picroma\Plasma\config` and `C:\ProgramData\Picroma\Plasma\settings`. `config` contains your serial and a value representing the state of your activation. `settings` contains the last encrypted PLX which Plasma received. Additional, less interesting data is stored in the `C:\Users\<user>\AppData\Local\Picroma\Plasma` directory.
 
