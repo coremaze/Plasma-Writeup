@@ -70,6 +70,8 @@ Around this time, I started looking at what the picroma.de domain used to point 
 
 **The domain was now available after all these years, and I bought it.**
 
+### No Need For a Patch
+
 With ownership of the picroma.de domain, in theory I could make Plasma work without even touching the binary or modifying the hosts file. Just, vanilla copies of Plasma would suddenly start working again one day. The thought of this was so cool to me that I halted my pursuit of creating a better sheet PLX file and started a deeper investigation into how the response was getting (de)obfuscated by the client. Understanding this would hopefully allow me to have my server send well-formed obfuscated responses that an unmodified client could understand.
 
 I had previously not been able to understand anything about how the deobfuscation algorithm was actually implemented. I found the last bit of code that seemed to touch it before it was transformed:
@@ -282,4 +284,8 @@ We have a working authentication server, but the PLX file we're sending still do
 
 I tracked the crashing issue down to attempting to deallocate uninitialized memory. With some experimentation, I realized that in my PLX file, I had two `plasma::Nodes` associated with 1 `plasma::Widget`. This was probably causing an attempt to destruct the widget twice. Removing the widget from one of the nodes fixed the issue. Associating a new widget with one of the nodes causes an infinite loop, so I couldn't do that.
 
-I'm not sure how sheets are supposed to work in Plasma, but it looks like sheets sadfjkllksdjaf;
+While fixing crashing issues, I noticed that if a PLX file that crashes plasma was sent, Plasma would likely crash next run without even connecting to the server. It turns out that Plasma saves data to `C:\ProgramData\Picroma\Plasma\config` and `C:\ProgramData\Picroma\Plasma\settings`. `config` contains your serial and a value representing the state of your activation. `settings` contains the last encrypted PLX which Plasma received. Additional, less interesting data is stored in the `C:\Users\<user>\AppData\Local\Picroma\Plasma` directory.
+
+I'm not sure how sheets are supposed to work in Plasma, but they seemed to have been rectangles around 1280x720 pixels, with a drop shadow behind them, upon which artwork would exist while being edited. For now, I made them slightly larger rectangles to account for modern monitors. I'm not sure if they perfectly replicate the original functionality, but they seem perfectly usable for now. I will revisit them if I need to.
+
+The most desirable solution would be to get the original sheet PLX. Although unlikely, since Plasma saves the encrypted file to `C:\ProgramData\Picroma\Plasma\settings` upon an activation attempt, it could be possible to recover it from an old installation and attempt to decrypt it. A zero byte file will be saved if authentication fails, but the encrypted data may still exist on the hard disk since the data was not strictly overwritten, so recovery may still be possible. In order to ensure that any remaining copies from 2011 do not accidentally destroy the data by authenticating with my server, I am limiting valid serials to `000000000000` and `PlasmaXGraphics`. It is possible to use arbitrary serials by modifying `C:\ProgramData\Picroma\Plasma\config`. This section will be revised if an encrypted copy of the file is recovered.
