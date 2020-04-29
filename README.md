@@ -1,4 +1,4 @@
-# Cracking Picroma Plasma Without Cracking it
+# Restoring Picroma Plasma Without Patching it
 
 ## and Reverse Engineering an Unknown Instruction Set
 
