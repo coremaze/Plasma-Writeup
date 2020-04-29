@@ -22,11 +22,11 @@ Okay. The most obvious next step is to find the code responsible for "activating
 
 ![Assembly](Images/Assembly1.png?raw=true)
 
-There are a couple places in the binary that reference a few data members in order to determine whether the program has been activated. However, any attempts to patch these jumps or write affirmative values to these data members will result in the program crashing. Usually, this is in the construction of a `Sheet` object, the parent class of `DesignSheet`, but patching around that just creates more exceptions. It is not possible to patch the program in this manner in order to get it to work. Let's take a look at the code which handles bad (or a lack of) responses from the server:
+There are a couple places in the binary that reference a few data members in order to determine whether the program has been activated. However, any attempts to patch these jumps or write affirmative values to these data members will result in the program crashing. Usually, this is in the construction of a `Sheet` object (Note that RTTI was in this binary, so some class names can be recovered), the parent class of `DesignSheet`, but patching around that just creates more exceptions. It is not possible to patch the program in this manner in order to get it to work. Let's take a look at the code which handles bad (or a lack of) responses from the server:
 
 ![Error handling](Images/ReportError.png?raw=true)
 
-This entire function is dedicated to error handling. I set up my own server to play with how it responds to various inputs, but I wasn't able to get anything interesting to happen other than change which error message it displayed. It can attempt to access any of the following paths:
+This entire function is dedicated to error handling. I set up my own server with Flask to play with how it responds to various inputs, but I wasn't able to get anything interesting to happen other than change which error message it displayed. It can attempt to access any of the following paths:
 
 ```
 /LS/Activation/Logout/
@@ -36,7 +36,9 @@ This entire function is dedicated to error handling. I set up my own server to p
 /LS/Activation/Deactivate/
 ```
 
-I noticed that it was also sending some parameter called `id`:
+It also seems to be able to contact `/Download/Plasma/release.xml` for updates, but this is not yet valuable to me.
+
+I noticed that it was also sending some parameter called `id` like so:
 
 `/LS/Activation/Activate/?id=393A3145362D8435C07146B46343695B466D3149735D9467BE5550C345877692418D315744E6A276D4774DE439BA9AC04698316930718588D195734331CD84F230CDF174D094849700CB42BB38FA842434DF1E8AFCB490B33EE653C3301AB055440C2`
 
@@ -46,7 +48,7 @@ Let's look for xrefs to this error handling function to see what triggers it.
 
 ![Error handling](Images/ErrorCatch.png?raw=true)
 
-Ah, so that error handling function is called if there is a `plasma` exception raised while handling the response.
+Ah, so that error handling function is called if there is a `plasma::IOException` raised while handling the response.
 
 I started placing breakpoints around to see which function raised the exception, and I found it happening in quite a peculiar function...
 
@@ -54,17 +56,17 @@ I started placing breakpoints around to see which function raised the exception,
 
 I recognize this code from reverse engineering Cube World to create [PLXML](https://github.com/ChrisMiuchiz/Plasma-Graphics-File-Parser). This is code to parse a Plasma graphics file. It seems that, for some reason, Plasma is expecting a Plasma graphics file to be sent back from the authentication server. Since it is failing to parse my response, it is triggering the error handling code.
 
-The function that calls both the parser and error handler receives data using an `std::vector*` which is passed to it:
+The function (which calls both the parser and error handler) receives data using an `std::vector*` which is passed to it:
 
 ![Data vector](Images/DataVector.png?raw=true)
 
 However, examining the data contained within the vector reveals nonsense, even when my server gives it a valid PLX file. The vectors coming into this function are the correct size to be the data being sent by my server, but the data is not what I sent. Upon more experimentation with small buffers, it seemed to be (de)obfuscated by performing addition/subtraction on the bytes and swapping them around somehow, so it didn't seem like a particularly strong obfuscation algorithm.
 
-For now, I decided to just overwrite the vector in memory using the original data before it was used. This effectively bypasses whatever obfuscation algorithm is happening. After implanting this valid PLX data, I stopped getting error messages when attempting to authenticate, but it caused exceptions instead. This ended up being due to elements being missing from my constructed PLX file and causing null pointer dereferences, so I worked through the exceptions until I constructed a PLX file using [PLXML](https://github.com/ChrisMiuchiz/Plasma-Graphics-File-Parser) with enough of the bare minimum requirements to load up one of Cube World's PLX files.
+For now, I decided to just overwrite the vector in memory with untouched data at this point in execution. This effectively bypasses whatever obfuscation algorithm is happening. After implanting this valid PLX data, I stopped getting error messages when attempting to authenticate, but it caused exceptions instead. This ended up being due to elements being missing from my constructed PLX file and causing null pointer dereferences, so I worked through the exceptions until I constructed a PLX file using [PLXML](https://github.com/ChrisMiuchiz/Plasma-Graphics-File-Parser) with enough of the bare minimum requirements to load up one of Cube World's PLX files.
 
 ![Cube World logo](Images/CubeWorldLogo.png?raw=true)
 
-It's not pretty, but this is probably the first time anyone's been able to use Plasma at all in the better part of a decade. It seems that Wollay removed a critical UI file (for the sheet which artwork exists on) from Plasma, and made it so that the server would provide an obfuscated version of it to the client. That way, no amount of tampering could get an unauthorized copy of Plasma to work. Unfortunately, without the authentication server, authorized copies of plasma cannot work anyway.
+It's not pretty, but this is probably the first time anyone's been able to use Plasma at all in the better part of a decade. It seems that Wollay removed a critical UI file (for the sheet which artwork exists on) from Plasma, and made it so that the server would provide an obfuscated version of it to the client. That way, no amount of tampering could get an unauthorized copy of Plasma to work. Unfortunately, without the authentication server, authorized copies of Plasma cannot work anyway.
 
 Around this time, I started looking at what the picroma.de domain used to point to. I didn't find much of interest on archive.org, but...
 
@@ -94,15 +96,15 @@ When framing it in the perspective of some kind of bytecode interpreter, emulato
 
 ![Emulator Loop](Images/EmulatorLoop.png?raw=true)
 
-This machine, whether to be called a virtual machine, emulator, or bytecode interpreter, had some `std::vector` containing code that was slightly obfuscated along with an `std::vector` which, when indexed using an opcode, has a function corresponding to that opcode. Data is simply deobfuscated by doing `offset - program[offset]` . Eventually, the opcode would become `0x0C`, and the emulation would stop, so this is likely a HALT or RET opcode. Each piece of data in this machine is 4 bytes long. Each instruction contains 1 opcode and 1 argument. When the function corresponding to an opcode is called, it can return a value that is added to the emulator's program counter. This is used for branching and in case an instruction needs to read more than just its argument.
+This machine, whether to be called a virtual machine, emulator, or bytecode interpreter, had some `std::vector` containing code that was slightly obfuscated along with another `std::vector` which, when indexed using an opcode, contains a function pointer corresponding to that opcode. Data is simply deobfuscated by performing `offset - program[offset]` . Eventually, the opcode would become `0x0C`, and the emulation would stop, so this is likely a HALT or RET opcode. Each piece of data in this machine is 4 bytes long. Each instruction contains 1 opcode and 1 argument. When the function corresponding to an opcode is called, it can return a value that is added to the emulator's program counter. This is used for branching and in case an instruction needs to read more than just its argument.
 
 I dumped this strange bytecode from memory, and knowing that `data = offset - program[offset]`, I was able to deobfuscate the entire thing, but that isn't much use without some kind of disassembler.
 
-So, I decided I had to figure out what each opcode did. It is worth noting at this point that I tried to see if this bytecode belongs to any existing CPU or language, but my search came up short. The constructor of this emulator conveniently assigned all the functions for me to analyze, but the list went on and on...
+With that, I decided I had to figure out what each opcode did. It is worth noting at this point that I tried to see if this bytecode belongs to any existing CPU or language, but my search came up short. The constructor of this emulator conveniently assigned all the functions for me to analyze, but the list went on and on...
 
 ![Lots of opcodes](Images/LotsOfOpcodes.png?raw=true)
 
-I painstakingly assigned meaning to every opcode function that I could, and I identified that this was a completely stack-based machine which did all its operations using the stack. It's worth noting that every element on the stack is itself a vector. This allows any element to hold arbitrary data. Here's an example of addition:
+I painstakingly assigned meaning to every opcode function that I could, and I identified that this was a completely stack-based machine which did all its operations using the stack. It's worth noting that every element on the stack is itself a vector. This allows any element to hold arbitrary data, such as pointers, strings, or simple integers. Here's an example of addition:
 
 ![Addition](Images/Addition.png?raw=true)
 
@@ -154,13 +156,13 @@ This is just what I needed to move on to disassembling the bytecode.
 
 ### Disassembling a New Instruction Set
 
-I had been working on a disassembler while reverse engineering the opcodes, but now that I have a complete description of the opcodes this program uses, I can disassemble the bytecode and begin to make a serious attempt at understanding it. The source for my disassembler is available at https://github.com/ChrisMiuchiz/PLASM-Disassembler.
+I had been working on a disassembler while reverse engineering the opcodes, but now that I have a complete description of the opcodes this program uses, I can disassemble the bytecode and begin to make a serious attempt at understanding its contents. The source for my disassembler is available at https://github.com/ChrisMiuchiz/PLASM-Disassembler.
 
 To find which function was obfuscating the PLX, I set a breakpoint on the data, and once it was written to, I set another breakpoint inside the emulator so that I could identify the program counter at the next virtual instruction.
 
 ![Disassembly 1](Images/Disassembly1.png?raw=true)
 
-Note: The comments documenting these syscalls were added later. My strategy for figuring out what each one did mostly came down to just stepping through to see what functions each one called.
+Note: The comments documenting these syscalls were added later. My strategy for figuring out what each one did mostly came down to simply stepping through to see what functions each one called. Syscalls are not OS syscalls; they are syscalls unique to the implementation of this emulator and are used to interact with x86 code.
 
 I had arrived in the middle of the obfuscation process. However, I wanted to make sure I started from the beginning. This function starts at address `0233`, so I looked for instances of `CALL $0233`. There were a few usages of it, but I had an idea of what part of code I was looking for, so eventually I was led to subroutine `0ED1`.
 
@@ -200,7 +202,7 @@ sub_056F (arg0, arg1, arg2) {
 }
 ```
 
-This function's purpose was confusing at first, but later, in context, I learned that it was used to generate an index to swap bytes with in order to scramble the PLX. Or, in this case, it's supposed to be *unscrambling* the PLX, but since it's already unscrambled, it ruins the PLX. It takes an index, the length of the buffer to be used for, and an array of values for use as a key.
+This function's purpose was confusing at first, but later, in context, I learned that it was used to generate an index to swap bytes with in order to scramble the PLX. Rather, in this case, it's supposed to be *unscrambling* the PLX, but since it's already unscrambled, it ruins the PLX. It takes an index, the length of the buffer to be used for, and an array of values for use as a key.
 
 I used the same strategies to decompile `0593`:
 
@@ -250,27 +252,31 @@ This is all ASCII:
 
 For my purposes, I don't need to know how the id itself is generated (though, strings in this bytecode reveal that it uses WQL to get serial numbers and such from hardware components), but I do need to know how to go from the parameter being sent to the server to this plaintext form so I can encrypt the PLX with it.
 
-I found where the hexdump version of the id was used:
+I found where the parameter version of the id was used:
 
 ![ID 1](Images/ID1.png?raw=true)
 
-However, that function was called by reference, and returned to one of the emulator's functions:
+However, that function was called by reference, and returned to one of the emulator's SYSCALL implementations:
 
 ![ID 2](Images/ID2.png?raw=true)
 
-So, it's time to go back into the emulator's disassembly.
+That means it's time to go back into the emulator's disassembly.
 
 ![Disassembly 5](Images/Disassembly5.png?raw=true)
 
-It assembles a different key than before: `[  4,  21, 132,  64,  32, 132, 243, 132,  17, 177,  43, 132, 101,  42,  44, 150]`
+It constructs a different key than before: `[  4,  21, 132,  64,  32, 132, 243, 132,  17, 177,  43, 132, 101,  42,  44, 150]`
 
-Then, it appends your machine id to another array. It was confusing in its implementation for me, but at runtime, I could see that this `UNKNOWN?` chunk actually fills var1 with your serial. This concatenates your serial with your machine id. Once this concatenated string is created, it encrypts it using the new key, dumps it as hex, and sends it to x86 code to be used as a parameter for the server.
+Afterwards, it appends your machine id to another array. It was confusing in its implementation for me, but at runtime, I could see that this `UNKNOWN?` chunk actually fills var1 with your serial. As a result, this concatenates your serial with your machine id. Once this concatenated string is created, it encrypts it using the new key, dumps it as hex, and sends it to x86 code to be used as a parameter for the server.
 
 ### Accomplishment
 
 Now we know everything we need to know in order to reverse this process so that the server can generate encrypted data.
 
+Excerpt from server.py:
+
 ![Python 1](Images/Python1.png?raw=true)
+
+Excerpt from encryption.py:
 
 ![Python 2](Images/Python2.png?raw=true)
 
@@ -284,7 +290,7 @@ We have a working authentication server, but the PLX file we're sending still do
 
 I tracked the crashing issue down to attempting to deallocate uninitialized memory. With some experimentation, I realized that in my PLX file, I had two `plasma::Nodes` associated with 1 `plasma::Widget`. This was probably causing an attempt to destruct the widget twice. Removing the widget from one of the nodes fixed the issue. Associating a new widget with one of the nodes causes an infinite loop, so I couldn't do that.
 
-While fixing crashing issues, I noticed that if a PLX file that crashes plasma was sent, Plasma would likely crash next run without even connecting to the server. It turns out that Plasma saves data to `C:\ProgramData\Picroma\Plasma\config` and `C:\ProgramData\Picroma\Plasma\settings`. `config` contains your serial and a value representing the state of your activation. `settings` contains the last encrypted PLX which Plasma received. Additional, less interesting data is stored in the `C:\Users\<user>\AppData\Local\Picroma\Plasma` directory.
+While fixing crashing issues, I noticed that if a PLX file that crashes Plasma was sent, Plasma would likely crash next run without even connecting to the server. It turned out that Plasma saves data to `C:\ProgramData\Picroma\Plasma\config` and `C:\ProgramData\Picroma\Plasma\settings`. `config` contains your serial and a value representing the state of your activation. `settings` contains the last encrypted PLX which Plasma received. Additional, less interesting data is stored in the `C:\Users\<user>\AppData\Local\Picroma\Plasma` directory.
 
 I'm not sure how sheets are supposed to work in Plasma, but they seemed to have been rectangles around 1280x720 pixels, with a drop shadow behind them, upon which artwork would exist while being edited. For now, I made them slightly larger rectangles to account for modern monitors. I'm not sure if they perfectly replicate the original functionality, but they seem perfectly usable for now. I will revisit them if I need to.
 
