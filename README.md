@@ -280,7 +280,7 @@ Excerpt from encryption.py:
 
 ![Python 2](Images/Python2.png?raw=true)
 
-This works. Using this code to generate responses from our server allows Plasma to successfully decrypt the traffic. The product activates.
+This works. Using this code to generate responses from our server allows Plasma to successfully decrypt the traffic. The product activates. We haven't made any changes to the program nor our hosts file. It's a crackless crack.
 
 ![Activated](Images/Activated.png?raw=true)
 
