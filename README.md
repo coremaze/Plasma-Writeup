@@ -10,7 +10,7 @@ Picroma/Wollay is also the author the game [Cube World](https://www.cubeworld.co
 
 The years went on, and with the help of my friend [Andoryuuta](https://github.com/Andoryuuta), I created [PLXML](https://github.com/ChrisMiuchiz/Plasma-Graphics-File-Parser), a tool that could convert the Plasma graphics files (known as .PLX, .PLD, or .PLG) to and from an XML file format. However, since these are vector graphics, it's more difficult to create an editor for them, and there was no GUI based editor except Plasma itself.
 
-Plasma was Picroma's first (and probably, in their eyes, their primary) product, but only one release was ever created, and it was in 2011. It used an authentication server which eventually went down, so when it stopped working, most people just got rid of the software and moved on. It wasn't until April 20th, 2020 that the installer from 2011 resurfaced and we could get to work on making this old art tool work again.
+Plasma was Picroma's first (and probably, in their eyes, their primary) product, but only one release was ever created, and it was in 2011. It used an authentication server which eventually went down, so when it stopped working, most people just got rid of the software and moved on. It wasn't until April 20th, 2020 that the installer from 2011 resurfaced and we could get to work on making this old art tool work again. The installer is PicromaPlasmaSetup.exe (SHA256 1ED1DA68781666CC03DAD79325B1F0603552DEDF55357778DA8518DFBF54F37A).
 
 ### Digging in
 
