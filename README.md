@@ -1,6 +1,6 @@
 # Cracking Picroma Plasma Without Cracking it
 
-## And Reverse Engineering an Unknown Instruction Set
+## and Reverse Engineering an Unknown Instruction Set
 
 ### Introduction
 
