@@ -60,7 +60,7 @@ I started placing breakpoints around to see which function raised the exception,
 
 I recognize this code from reverse engineering Cube World to create [PLXML](https://github.com/ChrisMiuchiz/Plasma-Graphics-File-Parser). This is code to parse a Plasma graphics file. It seems that, for some reason, Plasma is expecting a Plasma graphics file to be sent back from the authentication server. Since it is failing to parse my response, it is triggering the error handling code.
 
-The function (which calls both the parser and error handler) receives data using an `std::vector*` which is passed to it:
+The function (which calls both the parser and error handler) receives data contained within an `std::vector*` argument:
 
 ![Data vector](Images/DataVector.png?raw=true)
 
