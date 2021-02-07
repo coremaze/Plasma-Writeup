@@ -12,7 +12,7 @@ The years went on, and with the help of my friend [Andoryuuta](https://github.co
 
 Plasma was Picroma's first (and probably, in their eyes, their primary) product, but only one release was ever created, and it was in 2011. It used an authentication server which eventually went down, so when it stopped working, most people just got rid of the software and moved on. It wasn't until April 20th, 2020 that the installer from 2011 resurfaced and we could get to work on making this old art tool work again. 
 
-Note: The installer is PicromaPlasmaSetup.exe (SHA256 1ED1DA68781666CC03DAD79325B1F0603552DEDF55357778DA8518DFBF54F37A).
+Note: The installer is PicromaPlasmaSetup.exe (SHA256 `1ED1DA68781666CC03DAD79325B1F0603552DEDF55357778DA8518DFBF54F37A`).
 
 ### Digging in
 
