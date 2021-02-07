@@ -40,7 +40,7 @@ This entire function is dedicated to error handling. I set up my own server with
 /LS/Activation/Deactivate/
 ```
 
-It also seems to be able to contact `/Download/Plasma/release.xml` for updates, but this is not yet valuable to me.
+It also seems to be able to contact `/Download/Plasma/release.xml` for updates, but as of the time of investigation, this was not yet valuable to me. I *did* end up using it, supplying an update with the primary purpose of fixing bugs to increase system compatibility so this software can be more effectively preserved.
 
 I noticed that it was also sending some parameter called `id` like so:
 
