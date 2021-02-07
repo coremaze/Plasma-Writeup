@@ -26,7 +26,7 @@ Investigating the code in the program is done using a disassembler, with my pref
 
 ![Assembly](Images/Assembly1.png?raw=true)
 
-There are a couple places in the binary that reference a few data members in order to determine whether the program has been activated. However, any attempts to patch these jumps or write affirmative values to these data members will result in the program crashing. Usually, this is in the construction of a `Sheet` object (Note that RTTI was in this binary, so some class names can be recovered), the parent class of `DesignSheet`, but patching around that just creates more exceptions. It is not possible to patch the program in this manner in order to get it to work. Let's take a look at the code which handles bad (or a lack of) responses from the server:
+There are a couple places in the binary that reference a few data members in order to determine whether the program has been activated. However, any attempts to patch these jumps or write affirmative values to these data members will result in the program crashing. Usually, this is in the construction of a `Sheet` object (Note that [RTTI](https://en.wikipedia.org/wiki/Run-time_type_information) was in this binary, so some class names can be recovered), the parent class of `DesignSheet`, but patching around that just creates more exceptions. It is not possible to patch the program in this manner in order to get it to work. Let's take a look at the code which handles bad (or a lack of) responses from the server:
 
 ![Error handling](Images/ReportError.png?raw=true)
 
