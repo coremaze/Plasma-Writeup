@@ -48,7 +48,7 @@ While watching outbound traffic, I noticed that Plasma was also sending some par
 
 At this point, I had no idea what to do with it, but I assumed it represented the machine and serial in some way. 
 
-Let's look for xrefs to this error handling function to see what triggers it.	
+Let's look for xrefs (cross-references) to this error handling function to see what triggers it.
 
 ![Error handling](Images/ErrorCatch.png?raw=true)
 
