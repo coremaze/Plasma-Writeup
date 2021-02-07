@@ -118,7 +118,7 @@ I painstakingly assigned meaning to every opcode function that I could, and I id
 
 It takes two elements off the stack, adds them together, and then pushes the result back to the stack.
 
-Unfortunately, you can see a hint of something that became far too common while analyzing these opcodes. It makes one element negative before subtracting it. This is part of a larger pattern of fairly weak attempts to confuse a reverse engineer that made it frustrating to figure out what all the opcodes did, and there were many duplicate opcodes that were just implemented in different ways.
+Unfortunately, you can see a hint of something that became far too common while analyzing these opcodes. It makes one element negative before subtracting it. This is part of a larger pattern of fairly weak attempts to confuse a reverse engineer that made it frustrating to figure out what all the opcodes did, and there were many duplicate opcodes that were just implemented in different ways. To top it off, the compiler was configured in a way where it did not use normal calling conventions, so I eventually gave up on adjusting the decompilation to have function arguments in the correct order.
 
 Here's addition implemented by multiplying the result with some number and its reciprocal:
 
