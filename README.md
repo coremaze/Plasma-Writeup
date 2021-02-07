@@ -183,7 +183,7 @@ I started by reverse engineering all the functions that this function called. My
 The decompilation, by hand, of my first function looked like this:
 
 ```
-sub_0233 (arg0, arg1) {
+sub_0233(arg0, arg1) {
   var2 = arg0.length;
   var3 = arg1.length;
   arg0.resize(var2 + var3);
@@ -205,7 +205,7 @@ I moved onto the next required function at `056F`:
 A nice, short function which easily decompiled to the following:
 
 ```
-sub_056F (arg0, arg1, arg2) {
+sub_056F(arg0, arg1, arg2) {
   return (arg2[arg0 % arg2.length] + arg0) % arg1;
 }
 ```
@@ -246,7 +246,7 @@ sub_0ED1(global) { // A buffer representing your "id" is already on the stack
   var2.extend(global);
   sub_0593(var2, var1); // decrypt
   sub_0593(var0, var2); // decrypt
-  //don't think I need to care about the rest of this function
+  // don't think I need to care about the rest of this function
 }
 ```
 
