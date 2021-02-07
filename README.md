@@ -315,3 +315,7 @@ I'm no artist, so to show it off, here's recoloring Cube World's logo.
 ![Editing Cube World's logo](Images/CubeWorld2.png?raw=true)
 
 ![Cube World's new logo](Images/CubeWorld3.png?raw=true)
+
+After the initial writing of this document, I created some additional pieces:
+
+![Picroma Plasma art](Images/PlasmaArt.png?raw=true)
