@@ -244,8 +244,8 @@ sub_0ED1(global) { // A buffer representing your "id" is already on the stack
   var1.resize(16);
   var1 = {37, 124, 3, 213, 190, 48, 142, 34, 7, 77, 143, 210, 201, 97, 86, 23};
   var2.extend(global);
-  sub_0593(var2, var1); // decrypt
-  sub_0593(var0, var2); // decrypt
+  sub_0593(var2, var1); // decrypt "id" using hardcoded key
+  sub_0593(var0, var2); // decrypt PLX using decrypted "id"
   // don't think I need to care about the rest of this function
 }
 ```
@@ -275,6 +275,8 @@ That means it's time to go back into the emulator's disassembly.
 It constructs a different key than before: `[  4,  21, 132,  64,  32, 132, 243, 132,  17, 177,  43, 132, 101,  42,  44, 150]`
 
 Afterwards, it appends your machine id to another array. It was confusing in its implementation for me, but at runtime, I could see that this `UNKNOWN?` chunk actually fills var1 with your serial. As a result, this concatenates your serial with your machine id. Once this concatenated string is created, it encrypts it using the new key, dumps it as hex, and sends it to x86 code to be used as a parameter for the server.
+
+To summarize at a high level, the PLX is decrypted using a plaintext version of a fingerprint of your machine, and the fingerprint is encrypted before transmitting. However, when that encrypted fingerprint is sent to the server, it is concatenated with your serial number before being encrypted a second time with a different key.
 
 ### Accomplishment
 
