@@ -20,7 +20,9 @@ So, where do we start? When Plasma is launched, it wants to contact the authenti
 
 ![Could not connect](Images/NeedAuth.png?raw=true)
 
-Okay. The most obvious next step is to find the code responsible for "activating" Plasma and just patch some code to make it always activate, no matter what the authentication server does.
+Okay. The most obvious next step is to find the code responsible for "activating" Plasma and just patch some code to make it always activate, no matter what the authentication server does. 
+
+Investigating the code in the program is done using a disassembler, with my preferred one being the historic industry standard, [IDA Pro](https://www.hex-rays.com/). Free alternative disassemblers include [Ghidra](https://ghidra-sre.org/) and [Cutter](https://cutter.re/). These are also capable of producing "decompiled" C-like code. The eager should beware, as "decompiled" native code is not always functionally accurate and always requires significant human assistance in order to produce good output. That being said, moving forward I will show a combination of disassembly and decompilation, as the decompiled code is easier for a reader to digest and is more succinct.
 
 ![Assembly](Images/Assembly1.png?raw=true)
 
