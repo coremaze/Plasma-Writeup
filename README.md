@@ -52,7 +52,7 @@ Let's look for xrefs (cross-references) to this error handling function to see w
 
 ![Error handling](Images/ErrorCatch.png?raw=true)
 
-Ah, so that error handling function is called if there is a `plasma::IOException` raised while handling the response.
+Ah, so that error handling function is called if there is a `plasma::IOException` raised while handling the response. This is a type of C++ exception created by the developer which is being gracefully handled.
 
 I started placing breakpoints around to see which function raised the exception, and I found it happening in quite a peculiar function...
 
