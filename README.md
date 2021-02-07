@@ -42,7 +42,7 @@ This entire function is dedicated to error handling. I set up my own server with
 
 It also seems to be able to contact `/Download/Plasma/release.xml` for updates, but as of the time of investigation, this was not yet valuable to me. I *did* end up using it, supplying an update with the primary purpose of fixing bugs to increase system compatibility so this software can be more effectively preserved.
 
-I noticed that it was also sending some parameter called `id` like so:
+While watching outbound traffic, I noticed that Plasma was also sending some parameter called `id` formatted as a hexadecimal string like so:
 
 `/LS/Activation/Activate/?id=393A3145362D8435C07146B46343695B466D3149735D9467BE5550C345877692418D315744E6A276D4774DE439BA9AC04698316930718588D195734331CD84F230CDF174D094849700CB42BB38FA842434DF1E8AFCB490B33EE653C3301AB055440C2`
 
