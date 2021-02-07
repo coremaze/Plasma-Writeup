@@ -64,9 +64,9 @@ The function (which calls both the parser and error handler) receives data conta
 
 ![Data vector](Images/DataVector.png?raw=true)
 
-However, examining the data contained within the vector reveals nonsense, even when my server gives it a valid PLX file. The vectors coming into this function are the correct size to be the data being sent by my server, but the data is not what I sent. Upon more experimentation with small buffers, it seemed to be (de)obfuscated by performing addition/subtraction on the bytes and swapping them around somehow, so it didn't seem like a particularly strong obfuscation algorithm.
+However, using a debugger to examine the data contained within the vector reveals nonsense, even when my server gives it a valid PLX file. The vectors coming into this function are the correct size to be the data being sent by my server, but the data is not what I sent. Upon more experimentation with small buffers, it seemed to be (de)obfuscated by performing addition/subtraction on the bytes and swapping them around somehow, so it didn't seem like a particularly strong obfuscation algorithm.
 
-For now, I decided to just overwrite the vector in memory with untouched data at this point in execution. This effectively bypasses whatever obfuscation algorithm is happening. After implanting this valid PLX data, I stopped getting error messages when attempting to authenticate, but it caused exceptions instead. This ended up being due to elements being missing from my constructed PLX file and causing null pointer dereferences. A lot of these issues are caused by looking for an object by name which does not exist in the PLX:
+For now, I decided to just manually overwrite the vector in memory with untouched data at this point in execution. This effectively bypasses whatever obfuscation algorithm is happening. After implanting this valid PLX data, I stopped getting error messages when attempting to authenticate. However, it resulted in unhandled exceptions immediately after authenticating, crashing the program. This ended up being due to elements being missing from my constructed PLX file and causing null pointer dereferences. A lot of these issues are caused by Plasma looking for an object by name which does not exist in the PLX:
 
 ![Widget by name](Images/WidgetByName.png?raw=true)
 
