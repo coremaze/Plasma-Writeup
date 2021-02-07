@@ -74,7 +74,7 @@ I worked through these exceptions until I constructed a PLX file using [PLXML](h
 
 ![Cube World logo](Images/CubeWorldLogo.png?raw=true)
 
-It's not pretty, but this is probably the first time anyone's been able to use Plasma at all in the better part of a decade. It seems that Wollay removed a critical UI file (for the sheet which artwork exists on) from Plasma, and made it so that the server would provide an obfuscated version of it to the client. That way, no amount of tampering could get an unauthorized copy of Plasma to work. Unfortunately, without the authentication server, authorized copies of Plasma cannot work anyway.
+It's not pretty, but this is probably the first time anyone's been able to use Plasma at all in the better part of a decade. It seems that Wollay removed a critical UI file (for the sheet which artwork exists on) from Plasma, and he made it so the server would provide an obfuscated version of it to the client. That way, no amount of tampering could get an unauthorized copy of Plasma to work. Unfortunately, without the authentication server, authorized copies of Plasma cannot work anyway.
 
 Around this time, I started looking at what the picroma.de domain used to point to. I didn't find much of interest on archive.org, but...
 
